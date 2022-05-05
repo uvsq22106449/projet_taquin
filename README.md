@@ -1,3 +1,7 @@
 # projet_taquin
-Vive l'info
-INES
+# groupe BI 3
+# Benjamin TAVARES LEVY
+# Samuel DE OLIVEIRA
+# Ines MATOUK
+# Khayri BUSIN
+# 
