@@ -1,10 +1,6 @@
 from random import randrange
 from tkinter import *
-import time 
 
-
-#Source: https://prograide.com/pregunta/32072/la-faon-correcte-de-mettre-en-pause-un-programme-python
-#ines
 DELTA=20
 DIST=10
 moving=0
@@ -26,22 +22,20 @@ def multi(orig, empty):
         L.append(pos)
     return L, (dirx, diry)
 
-def retour(R):
-    pass #(db.rollback())
-
-def pause(): 
-    programPause = raw_input("Press the <ENTER> key to continue") 
-    pass #fonctionne pas, c'etatait pour mettre la partie en pause
-
-def melanger(N):
-    board=[[4*lin+1+col for col in range(4)]
-        for lin in range(4)]
-
-    empty=(3,3)
-
-    for i in range(N):
-        empty=echange(board, empty)
-    return board
+def anim(item, target, drtn):
+    global moving
+    L =cnv.coords(item)
+    a=L[0]
+    b=L[1]
+    x, y=target
+    u, v=drtn
+    d=u*(x-a)+v*(y-b)
+    if d>DIST:
+        cnv.move(item, u*DIST, v*DIST)
+        cnv.after(DELTA, anim, item, target, drtn)
+    else:
+        cnv.move(item, (x-a), (y-b))
+        moving-=1
 
 #Benjamin
 def genererPlateauRandom() ->list:
@@ -80,7 +74,96 @@ def genererPlateauValable() -> list:
 
     return matricePlateau
 
-#ines
+
+def move_tile(orig, dstn, drtn):
+    global moving
+    i, j=orig
+    nro=board[i][j]
+    rect, txt=items[nro]
+    ii, jj =dstn
+    target=100*jj, 100*ii
+    target_txt=100*jj+50, 100*ii+50
+
+    anim(rect, target, drtn)
+    anim(txt, target_txt, drtn)
+    moving+=2
+
+    board[i][j],board[ii][jj]=board[ii][jj], board[i][j]
+
+
+
+
+
+
+def voisins(n, i, j):
+    return [(a,b) for (a, b) in
+            [(i, j+1),(i, j-1), (i-1, j), (i+1,j)]
+            if a in range(n) and b in range(n)]
+
+def echange(board, empty):
+    i, j=empty
+    V=voisins(4, i, j)
+    ii, jj=V[randrange(len(V))]
+    board[ii][jj], board[i][j]=board[i][j],board[ii][jj]
+    return ii, jj
+
+def normal(board, empty):
+    i_empty, j_empty = empty
+    for i in range(i_empty, 4):
+        (board[i][j_empty], board[i_empty][j_empty])= (
+            board[i_empty][j_empty], board[i][j_empty])
+        i_empty=i
+    for j in range(j_empty, 4):
+        board[i_empty][j], board[i_empty][j_empty]= (
+            board[i_empty][j_empty],board[i_empty][j])
+        j_empty=j
+
+def melanger(N):
+    board=[[4*lin+1+col for col in range(4)]
+        for lin in range(4)]
+
+    empty=(3,3)
+
+    for i in range(N):
+        empty=echange(board, empty)
+    return board
+
+def init(N=1000):
+    global i_empty, j_empty, items, board, bravo
+    cnv.delete("all")
+    items=[None]
+
+    board=melanger(N)
+    for i in range(4):
+        for j in range(4):
+            if board[i][j]==16:
+                i_empty, j_empty=i, j
+    empty=i_empty, j_empty
+    normal(board, empty)
+    i_empty, j_empty=3,3
+    items=[None for i in range(17)]
+
+    for i in range(4):
+        for j in range(4):
+            x, y=100*j, 100*i
+            A, B, C=(x, y), (x+100, y+100), (x+50, y+50)
+            rect=cnv.create_rectangle(A, B, fill="green")
+            nro=board[i][j]
+            txt=cnv.create_text(C, text=nro, fill="yellow",
+                                font=FONT)
+            items[nro]=(rect, txt)
+    rect, txt=items[16]
+    cnv.delete(txt)
+    cnv.delete(rect)
+    lbl.configure(text="")
+    bravo=False
+
+
+win=[[1, 2, 3, 4],
+     [5, 6, 7, 8],
+     [9, 10, 11, 12],
+     [13, 14, 15, 16]]
+
 FONT=('Ubuntu', 27, 'bold')
 master=Tk()
 cnv=Canvas(master, width=400, height=400, bg='gray70')
@@ -97,5 +180,26 @@ lbl.pack(side="left")
 
 cnv.bind("<Button-1>",clic)
 init()
+
+import json
+#save files below
+def save_file():
+#to enter a name for your file
+#if you don't want to just make it a string
+    save_name = input("savename: ")
+    path = 'path_to_dir{0}.json'.format(save_name)
+    data = {
+        'name': save_name
+    }
+    with open(path, 'w+') as f:
+        json.dump(data, f)
+
+
+def load_file():
+    load_name = save_name
+    path_two = 'path_to_dir{0}.json'.format(load_name)
+    with open(path_two, 'r') as f:
+        j = json.load(f)
+        name = str(j['name'])
 
 master.mainloop()
